@@ -9,15 +9,16 @@ bool is_ip_addr(const string& ip_addr){
     return regex_match(ip_addr, ip_pattern);
 }
 
-string dns_resolver(const string& hostname){
+pair<string, string> dns_resolver(const string& hostname){
     struct addrinfo hints, *result, *rp;
     int status;
-    char ipstr[INET6_ADDRSTRLEN];  // enough for both IPv4 and IPv6
+    char ipstr_v6[INET6_ADDRSTRLEN];  // enough for both IPv4 and IPv6
+    char ipstr_v4[INET_ADDRSTRLEN];
 
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
-    hints.ai_flags = AI_PASSIVE;    /* For wildcard IP address */
+    hints.ai_family = AF_UNSPEC;    // Allow IPv4 or IPv6 
+    hints.ai_socktype = SOCK_STREAM; // stream socket
+    hints.ai_flags = AI_PASSIVE;    // For wildcard IP address */
     hints.ai_protocol = 0;          /* Any protocol */
 
     if ((status = getaddrinfo(hostname.c_str(), NULL, &hints, &result)) != 0) {
@@ -32,25 +33,32 @@ string dns_resolver(const string& hostname){
 
     // Loop through results
     for (rp = result; rp != NULL; rp = rp->ai_next) {
-        void* addr;
-        std::string ipver;
+        void *v4_addr, *v6_addr;
+        std::string ipver4, ipver6;
 
         // Get pointer to the address itself
         if (rp->ai_family == AF_INET) { // IPv4
             struct sockaddr_in* ipv4 = (struct sockaddr_in*)rp->ai_addr;
-            addr = &(ipv4->sin_addr);
-            ipver = "IPv4";
+            v4_addr = &(ipv4->sin_addr);
+            ipver4 = "IPv4";
         } else { // IPv6
             struct sockaddr_in6* ipv6 = (struct sockaddr_in6*)rp->ai_addr;
-            addr = &(ipv6->sin6_addr);
-            ipver = "IPv6";
+            v6_addr = &(ipv6->sin6_addr);
+            ipver6 = "IPv6";
         }
 
         // Convert IP to human-readable form
-        inet_ntop(rp->ai_family, addr, ipstr, sizeof ipstr);
-        std::cout << "  " << ipver << ": " << ipstr << "\n";
+        if(v4_addr){
+            inet_ntop(rp->ai_family, v4_addr, ipstr_v4, sizeof ipstr_v4);
+            std::cout << "  " << ipver4 << ": " << ipstr_v4 << "\n";
+        }
+        if(v6_addr){
+            inet_ntop(rp->ai_family, v6_addr, ipstr_v6, sizeof ipstr_v6);
+            std::cout << "  " << ipver6 << ": " << ipstr_v6 << "\n";
+        }
+
     }
     freeaddrinfo(result); // free the linked list
-    
-    return string(ipstr);
+
+    return {string(ipstr_v4), string(ipstr_v6)};
 }

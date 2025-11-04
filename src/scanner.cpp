@@ -43,8 +43,10 @@ int main(int argc, char* argv[]) {
     }
     else {
         //DNS Resolution here
-        const string target_ip = dns_resolver(argv[1]);
-        cout << "Resolved IP address for hostname "<< argv[1]<< " : "<< target_ip << endl;
+        const auto [target_ipv4, target_ipv6] = dns_resolver(argv[1]);
+        cout << "Resolved IP(s) address for hostname "<< argv[1]<< " : \n"
+        << "IPV4: " << target_ipv4 << "\n IPV6: "
+        << target_ipv6 << endl;
         
     }
     return 0;

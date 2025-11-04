@@ -22,6 +22,6 @@ extern string PORT_RANGE;
 extern string MODE;
 
 bool is_ip_addr(const string& target);
-string dns_resolver(const string& hostname);
+pair<string, string> dns_resolver(const string& hostname);
 
 #endif

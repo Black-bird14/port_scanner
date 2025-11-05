@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if (is_valid_ipv4_addr(argv[1])) {
+    if (is_valid_ip_addr(argv[1])) {
         cout << "Valid IP Provided, proceeding with scan." << endl;
         const string target_ip = argv[1];
     }

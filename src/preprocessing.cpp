@@ -1,12 +1,18 @@
 #include "preprocessing.hpp"
 
-bool is_valid_ipv4_addr(const string& ip_addr){
+bool is_valid_ip_addr(const string& ip_addr){
     if (ip_addr.empty()) {
         return false; // An empty string is not a number
     }
-    static const regex ip_pattern(R"((\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b)");
-    
-    return regex_match(ip_addr, ip_pattern);
+     struct in_addr ipv4;
+    struct in6_addr ipv6;
+
+    // Try IPv4
+    if (inet_pton(AF_INET, ip_addr.c_str(), &ipv4) == 1) return true;
+    // Try IPv6
+    if (inet_pton(AF_INET6, ip_addr.c_str(), &ipv6) == 1) return true;
+
+    return false;
 }
 
 pair<string, string> dns_resolver(const string& hostname){

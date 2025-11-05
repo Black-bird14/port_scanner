@@ -1,4 +1,4 @@
-#include "tcp_scan.hpp"
+#include "preprocessing.hpp"
 
 string PORT_RANGE = "1-1024";
 string MODE = "TCP";
@@ -11,22 +11,24 @@ string MODE = "TCP";
 // Add progress bar
 
 // 2nd Iteration
-
 // Add verbose mode, although got to decide what verbose & non-verbose modes should look like
-// Add multithreading (1 thread = subrange)
+//Add different scan types (UDP, SYN, maybe try to replicate the scan types nmap provides)
+
 
 // 3rd Iteration
+// Add multithreading (1 thread = subrange)
 
-//Add different scan types (UDP, SYN, maybe try to replicate the scan types nmap provides)
 int main(int argc, char* argv[]) {
-    // 1. Parse arguments: target IP/domain + optional port range
-    // 2. Resolve hostname to IP
-    // 3. Spawn threads to scan different port chunks
-    // 4. Each thread:
+    // 1. Parse arguments: target IP/domain + optional port range [x]
+    // 2. Resolve hostname to IP [x]
+    // 3. Try to connect to port
+    //    - If connected, report as open
+    // 4. Spawn threads to scan different port chunks
+    // 5. Each thread:
     //    - Try to connect to port
     //    - If connected, report as open
-    // 5. Join all threads
-    // 6. Display results
+    // 6. Join all threads
+    // 7. Display results
 
 
     if (argc < 2) {
@@ -37,18 +39,22 @@ int main(int argc, char* argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if (is_ip_addr(argv[1])) {
+    if (is_valid_ipv4_addr(argv[1])) {
         cout << "Valid IP Provided, proceeding with scan." << endl;
         const string target_ip = argv[1];
     }
+    //TODO: Implement IPV6 regex-based validator
     else {
         //DNS Resolution here
         const auto [target_ipv4, target_ipv6] = dns_resolver(argv[1]);
         cout << "Resolved IP(s) address for hostname "<< argv[1]<< " : \n"
         << "IPV4: " << target_ipv4 << "\n IPV6: "
         << target_ipv6 << endl;
-        
     }
+    //start scan
+    // first split port subranges among threads (2nd iter)
+
+
     return 0;
     
 

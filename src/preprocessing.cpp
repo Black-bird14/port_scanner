@@ -1,6 +1,6 @@
-#include "tcp_scan.hpp"
+#include "preprocessing.hpp"
 
-bool is_ip_addr(const string& ip_addr){
+bool is_valid_ipv4_addr(const string& ip_addr){
     if (ip_addr.empty()) {
         return false; // An empty string is not a number
     }

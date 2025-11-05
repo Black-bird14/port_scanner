@@ -1,5 +1,5 @@
-#ifndef SCANNER_HPP
-#define SCANNER_HPP
+#ifndef PREPROCESSING_HPP
+#define PREPROCESSING_HPP
 
 using namespace std;
 
@@ -21,7 +21,7 @@ using namespace std;
 extern string PORT_RANGE;
 extern string MODE;
 
-bool is_ip_addr(const string& target);
+bool is_valid_ipv4_addr(const string& target);
 pair<string, string> dns_resolver(const string& hostname);
 
 #endif

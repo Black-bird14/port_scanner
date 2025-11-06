@@ -1,7 +1,4 @@
-#include "preprocessing.hpp"
-
-string PORT_RANGE = "1-1024";
-string MODE = "TCP";
+#include "scanner.hpp"
 
 // 1st Iteration
 // Start simple: args will be target IP/domain + optional port range (default port range is 1-1024)
@@ -30,13 +27,19 @@ int main(int argc, char* argv[]) {
     // 6. Join all threads
     // 7. Display results
 
+    variables_map vm;
+    store(command_line_parser(ac, av, desc), vm);
+    notify(vm);
 
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <hostname/IP address>\n", argv[0]);
-        cout << "Options:" << endl;
-        cout << "   -p <port range>: Example -p 1000-5000, if no port range is provided, the default is 1-1024." << endl;
-        cout << "   -v: Verbose output, displays a more detailed output during the scan." << endl;
+        cout << desc << endl;
         exit(EXIT_FAILURE);
+    }
+
+    if(vm.count("help")) {
+        cout << desc << endl;
+        return 1;
     }
 
     if (is_valid_ip_addr(argv[1])) {
@@ -51,8 +54,12 @@ int main(int argc, char* argv[]) {
         << "IPV4: " << target_ipv4 << "\n IPV6: "
         << target_ipv6 << endl;
     }
+
+    if(vm.count("tC")) cout << "TCP connect scan selected" << endl;
+
     //start scan
-    // first split port subranges among threads (2nd iter)
+    // first turn port ranges in port list
+
 
 
     return 0;

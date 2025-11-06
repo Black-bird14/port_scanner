@@ -3,15 +3,15 @@ CXX = g++
 
 #Compiler flags
 CXXFLAGS = -Wall -g
-INCLUDES = -I include/ -I /usr/local/include
+INCLUDES = -Iinclude/ -I/usr/local/include -I/usr/include
 # Space-separated pkg-config libraries used by this project
-LIBS =
+LIBS = -lboost_program_options
 
 # path #
 SRC_PATH = src
 BUILD_PATH = build
 BIN_PATH = $(BUILD_PATH)/bin
-
+BIN_NAME = scanner
 # extensions #
 SRC_EXT = cpp
 

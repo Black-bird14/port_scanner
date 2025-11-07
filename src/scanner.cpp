@@ -15,6 +15,24 @@
 // 3rd Iteration
 // Add multithreading (1 thread = subrange)
 
+string ports;
+vector<string> scans;
+
+po::options_description get_options_description() {
+    po::options_description desc("Options:");
+    desc.add_options()
+        ("help,h", "Display help message")
+        ("ports,p", po::value<string>(&ports)->default_value(PORT_RANGE), 
+      "Set port range to scan, e.g. -p 1000-5000, if no port range is provided, the default is 1-1024.")
+        ("verbose,v", "Displays a more detailed output during the scan.")
+        ("scans", po::value< vector<string> >(&scans), 
+        "Run multiple scan types.\nNOTE: Can't run two TCP scans at once, so only a TCP scan of choice and UDP scan can be run together.") 
+        ("tC", "TCP connect Scan")
+        ("tS", "TCP SYN Scan (stealth mode)")
+    ;
+    return desc;
+}
+
 int main(int argc, char* argv[]) {
     // 1. Parse arguments: target IP/domain + optional port range [x]
     // 2. Resolve hostname to IP [x]
@@ -27,9 +45,10 @@ int main(int argc, char* argv[]) {
     // 6. Join all threads
     // 7. Display results
 
-    variables_map vm;
-    store(command_line_parser(ac, av, desc), vm);
-    notify(vm);
+    po::options_description desc = get_options_description();
+    po::variables_map vm;
+    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+    po::notify(vm);
 
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <hostname/IP address>\n", argv[0]);
@@ -59,7 +78,13 @@ int main(int argc, char* argv[]) {
 
     //start scan
     // first turn port ranges in port list
+    /*
+    for ( variables_map::iterator i = vm.begin() ; i != vm.end() ; ++ i )
+    {
+        
+    }
 
+    */
 
 
     return 0;

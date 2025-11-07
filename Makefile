@@ -3,7 +3,8 @@ CXX = g++
 
 #Compiler flags
 CXXFLAGS = -Wall -g
-INCLUDES = -Iinclude/ -I/usr/local/include -I/usr/include
+LDFLAGS = -Wl,-rpath,/usr/lib/x86_64-linux-gnu
+INCLUDES = -I$(CURDIR)/include/ -I/usr/local/include -I/usr/include
 # Space-separated pkg-config libraries used by this project
 LIBS = -lboost_program_options
 
@@ -59,7 +60,7 @@ all: $(BIN_PATH)/$(TARGET)
 #	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 $(BIN_PATH)/$(TARGET): $(OBJS)
 	@echo "Linking: $@"
-	$(CXX) $(OBJS) -o $@ ${LIBS}
+	$(CXX) $(OBJS) -o $@ $(LDFLAGS) ${LIBS}
 
 # Rule to compile .cpp files into .o files
 #%.o: %.cpp
@@ -70,6 +71,7 @@ $(BIN_PATH)/$(TARGET): $(OBJS)
 # dependency files to provide header dependencies
 $(BUILD_PATH)/%.o: $(SRC_PATH)/%.$(SRC_EXT)
 	@echo "Compiling: $< -> $@"
+	@echo "INCLUDES = $(INCLUDES)"
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
 
 # Rule to run the executable

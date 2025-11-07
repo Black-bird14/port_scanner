@@ -10,22 +10,14 @@ string PORT_RANGE = "1-1024";
 string SCAN = "tC";
 
 
-string ports;
-vector<string> scans;
-po::options_description desc("Options:");
-desc.add_options()
-    ("help,h", "Display help message")
-    ("ports,p", po::value<string>(&ports)->default_value(PORT_RANGES), 
-  "Set port range to scan, e.g. -p 1000-5000, if no port range is provided, the default is 1-1024.")
-    ("verbose,v", "Displays a more detailed output during the scan.")
-    ("scans", po::value< vector<string> >(scans), 
-    "Run multiple scan types.\nNOTE: Can't run two TCP scans at once, so only a TCP scan of choice and UDP scan can be run together.") 
-    ("tC", "TCP connect Scan")
-    ("tS", "TCP SYN Scan (stealth mode)")
-;
+extern string ports;
+extern vector<string> scans;
+po::options_description get_options_description();
 
 
 /*("include-path,I", po::value< vector<string> >(), 
   "include path")
     ("input-file", po::value< vector<string> >(), "input file")*/
 #endif
+
+//src: https://www.boost.org/doc/libs/latest/doc/html/program_options/overview.html#id-1.3.29.5.10

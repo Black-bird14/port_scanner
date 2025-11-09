@@ -15,22 +15,33 @@
 // 3rd Iteration
 // Add multithreading (1 thread = subrange)
 
-string ports;
-vector<string> scans;
-
 po::options_description get_options_description() {
     po::options_description desc("Options:");
     desc.add_options()
         ("help,h", "Display help message")
-        ("ports,p", po::value<string>(&ports)->default_value(PORT_RANGE), 
+        ("ports,p", po::value<string>(&port_range)->default_value(PORT_RANGE), 
       "Set port range to scan, e.g. -p 1000-5000, if no port range is provided, the default is 1-1024.")
         ("verbose,v", "Displays a more detailed output during the scan.")
         ("scans", po::value< vector<string> >(&scans), 
         "Run multiple scan types.\nNOTE: Can't run two TCP scans at once, so only a TCP scan of choice and UDP scan can be run together.") 
-        ("tC", "TCP connect Scan")
-        ("tS", "TCP SYN Scan (stealth mode)")
-    ;
+        ("connect,C", "TCP connect Scan")
+        ("syn,S", "TCP SYN Scan (stealth mode)")
+        ("udp,U", "UDP Scan (stealth mode)");
     return desc;
+}
+
+pair<int, int> parse_port_range(const string& range) {
+    int start, stop;
+    char dash;
+    istringstream iss(range);
+
+    if (!(iss >> start >> dash >> stop) || dash != '-') {
+        throw invalid_argument("Invalid port range format. Expected format: start-stop (e.g. 20-80)");
+    }
+    if (start < 1 || stop > 65535 || start > stop) {
+        throw out_of_range("Invalid port range values (must be 1–65535 and start <= stop)");
+    }
+    return {start, stop};
 }
 
 int main(int argc, char* argv[]) {
@@ -46,12 +57,21 @@ int main(int argc, char* argv[]) {
     // 7. Display results
 
     po::options_description desc = get_options_description();
+
+    po::options_description hidden("Hidden");
+    hidden.add_options()
+        ("target", po::value<std::string>(&target), "Target host or IP");
+    po::options_description all("All options");
+    all.add(desc).add(hidden);
+    po::positional_options_description pos;
+    pos.add("target", 1);
+
     po::variables_map vm;
-    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+    po::store(po::command_line_parser(argc, argv).options(all).positional(pos).run(), vm);
     po::notify(vm);
 
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <hostname/IP address>\n", argv[0]);
+        fprintf(stderr, "Usage: %s [options] [hostname/IP address]\n", argv[0]);
         cout << desc << endl;
         exit(EXIT_FAILURE);
     }
@@ -65,26 +85,21 @@ int main(int argc, char* argv[]) {
         cout << "Valid IP Provided, proceeding with scan." << endl;
         const string target_ip = argv[1];
     }
-    //TODO: Implement IPV6 regex-based validator
     else {
         //DNS Resolution here
-        const auto [target_ipv4, target_ipv6] = dns_resolver(argv[1]);
+        const auto [resolved_ipv4, resolved_ipv6] = dns_resolver(argv[1]);
         cout << "Resolved IP(s) address for hostname "<< argv[1]<< " : \n"
-        << "IPV4: " << target_ipv4 << "\n IPV6: "
-        << target_ipv6 << endl;
+        << "IPV4: " << resolved_ipv4 << "\n IPV6: "
+        << resolved_ipv6 << endl;
     }
-
-    if(vm.count("tC")) cout << "TCP connect scan selected" << endl;
-
-    //start scan
     // first turn port ranges in port list
-    /*
-    for ( variables_map::iterator i = vm.begin() ; i != vm.end() ; ++ i )
-    {
-        
+
+    if(vm.count("connect")){ 
+        cout << "TCP connect scan selected" << endl;
+        //start scan
     }
 
-    */
+    auto [port_start, port_stop] = parse_port_range(port_range);
 
 
     return 0;

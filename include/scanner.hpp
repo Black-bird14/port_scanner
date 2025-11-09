@@ -2,6 +2,8 @@
 #define SCANNER_HPP
 #include <boost/program_options.hpp>
 #include "preprocessing.hpp"
+#include <sstream>
+#include <stdexcept>
 
 using namespace std;
 namespace po = boost::program_options;
@@ -9,10 +11,12 @@ namespace po = boost::program_options;
 string PORT_RANGE = "1-1024";
 string SCAN = "tC";
 
-
-extern string ports;
-extern vector<string> scans;
+string target;
+string port_range;
+int ports;
+vector<string> scans;
 po::options_description get_options_description();
+pair<int, int> parse_port_range(const string& range);
 
 
 /*("include-path,I", po::value< vector<string> >(), 

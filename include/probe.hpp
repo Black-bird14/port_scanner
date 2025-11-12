@@ -26,7 +26,7 @@ public:
     // Synchronous probe: perform the probe and return a ProbeResult.
     // - timeout_ms: time budget for the probe (ms). Implementations should honor it.
     // This is the easiest to use while building single-threaded versions.
-    virtual ProbeResult probe_sync(const std::string& target_ip,
+    virtual ProbeResult probe_sync(const string& target_ip,
                                    uint16_t port,
                                    int timeout_ms) = 0;
 
@@ -35,18 +35,18 @@ public:
     // poll_probe to get a result or cancel_probe to abort.
     //
     // Default implementations return std::nullopt to indicate "not supported".
-    virtual std::optional<int> start_probe(const std::string& target_ip,
+    virtual optional<int> start_probe(const string& target_ip,
                                            uint16_t port,
                                            int timeout_ms) {
-        return std::nullopt;
+        return nullopt;
     }
 
     // Poll the in-flight probe (non-blocking). Returns:
     //  - std::nullopt: still pending
     //  - ProbeResult: probe finished (success/failure)
     // On error, an implementation can return a ProbeResult with Status::ERROR.
-    virtual std::optional<ProbeResult> poll_probe(int probe_id) {
-        return std::nullopt;
+    virtual optional<ProbeResult> poll_probe(int probe_id) {
+        return nullopt;
     }
 
     // Cancel an in-flight probe started via start_probe (best-effort).

@@ -3,25 +3,32 @@
 
 using namespace std;
 
-#include <stdio.h>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <cstring>
-#include <ctime>
-#include <regex>
-//DNS Resolution
-#include <vector>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <arpa/inet.h>
-//
+#include <cstring>
+#include <stdexcept>
+#include <string>
+#include <cerrno>
+#include <chrono>
+#include <ostream>
+#include <iostream>
 
 extern string PORT_RANGE;
 extern string MODE;
 
-bool is_valid_ip_addr(const string& target);
-pair<string, string> dns_resolver(const string& hostname);
+struct ResolvedTarget {
+    sockaddr_storage addr{};
+    socklen_t addrlen = 0;
+    int family = AF_UNSPEC;
+    string printable_ip;
+};
+
+
+static bool connect_with_timeout(int sockfd, const struct sockaddr* sa, socklen_t sa_len, int timeout_ms);
+ResolvedTarget dns_resolver(const string& hostname, int timeout_ms = 500);
 
 #endif

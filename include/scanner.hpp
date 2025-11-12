@@ -5,7 +5,6 @@
 #include <sstream>
 #include <stdexcept>
 
-using namespace std;
 namespace po = boost::program_options;
 
 string PORT_RANGE = "1-1024";

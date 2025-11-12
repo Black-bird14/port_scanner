@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
 
     po::options_description hidden("Hidden");
     hidden.add_options()
-        ("target", po::value<std::string>(&target), "Target host or IP");
+        ("target", po::value<string>(&target), "Target host or IP");
     po::options_description all("All options");
     all.add(desc).add(hidden);
     po::positional_options_description pos;
@@ -81,25 +81,22 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if (is_valid_ip_addr(argv[1])) {
-        cout << "Valid IP Provided, proceeding with scan." << endl;
-        const string target_ip = argv[1];
-    }
-    else {
-        //DNS Resolution here
-        const auto [resolved_ipv4, resolved_ipv6] = dns_resolver(argv[1]);
-        cout << "Resolved IP(s) address for hostname "<< argv[1]<< " : \n"
-        << "IPV4: " << resolved_ipv4 << "\n IPV6: "
-        << resolved_ipv6 << endl;
-    }
-    // first turn port ranges in port list
+    //Check IP or Resolve Hostname        
+    const ResolvedTarget target_ip = dns_resolver(target);
+    // first turn port ranges to int
+    auto [port_start, port_stop] = parse_port_range(port_range);
 
     if(vm.count("connect")){ 
-        cout << "TCP connect scan selected" << endl;
+        cout << "TCP Connect scan selected" << endl;
         //start scan
     }
+    else if (vm.count("syn")){
+        cout << "TCP SYN scan selected (stealth mode)" << endl;
+    }
 
-    auto [port_start, port_stop] = parse_port_range(port_range);
+    else if (vm.count("udp")){
+        cout << "UDP scan selected" << endl;
+    }
 
 
     return 0;

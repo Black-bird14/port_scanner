@@ -17,20 +17,23 @@ using namespace std;
 #include <chrono>
 #include <ostream>
 #include <iostream>
+#include <netinet/in.h>
 #include "probe.hpp"
 
 class TcpConnectProbe : public Probe {
     private:
-        string target_ip;
-        uint16_t port;
+        ResolvedTarget target_ip;
+        uint16_t port_start;
+        uint16_t port_stop;
         int timeout;
     public:
-        TcpConnectProbe (const string& ip, uint16_t p, int t)
-                                   : target_ip(ip), port(p), timeout(t){}
+        TcpConnectProbe (const ResolvedTarget& ip, uint16_t pstart, uint16_t pstop, int t)
+                    : target_ip(ip), port_start(pstart), port_stop(pstop), timeout(t) {}
                             
-        ProbeResult probe_sync(const string& target_ip,
-                                   uint16_t port,
-                                   int timeout) override {}
-}
+        vector<ProbeResult> probe_sync(const ResolvedTarget& target_ip,
+                                   uint16_t port_start,
+                                   uint16_t port_stop,
+                                   int timeout) override;
+};
 
 #endif

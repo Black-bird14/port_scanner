@@ -18,7 +18,7 @@ string port_range;
 int ports;
 vector<string> scans;
 ResolvedTarget target_ip;
-ProbeResult scan_results;
+vector<ProbeResult> scan_results;
 po::options_description get_options_description();
 pair<int, int> parse_port_range(const string& range);
 

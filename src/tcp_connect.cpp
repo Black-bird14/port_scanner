@@ -1,8 +1,55 @@
 #include "tcp_connect.hpp"
 
+
+
+
+vector<ProbeResult> TcpConnectProbe::probe_sync(const ResolvedTarget& target_ip,
+                        uint16_t port_start, uint16_t port_stop,
+                        int timeout) {
+    vector<ProbeResult> results;
+    ProbeResult result;
+    for (uint16_t port = port_start; port <= port_stop; port++){
+        int connect_socket = socket(target_ip.family, SOCK_STREAM, 0);
+        if (connect_socket < 0) continue;
+        int status;
+
+        if (target_ip.family == AF_INET) {
+        // Copy the base IPv4 address, then set the port
+        sockaddr_in addr4 = *reinterpret_cast<const sockaddr_in*>(&target_ip.addr);
+        addr4.sin_port = htons(port);
+
+        status = connect(connect_socket,
+                         reinterpret_cast<const sockaddr*>(&addr4),
+                         target_ip.addrlen);
+        } 
+        else if (target_ip.family == AF_INET6) {
+            // Copy the base IPv6 address, then set the port
+            sockaddr_in6 addr6 = *reinterpret_cast<const sockaddr_in6*>(&target_ip.addr);
+            addr6.sin6_port = htons(port);
+
+            status = connect(connect_socket,
+                            reinterpret_cast<const sockaddr*>(&addr6),
+                            target_ip.addrlen);
+        }
+        if(status == 0){
+            cout<< "Connect successful for port number: "<< port << endl;
+            result.target = target_ip.printable_ip;
+            result.port = port;
+            result.protocol = ProbeResult::Protocol::TCP;
+            result.status = ProbeResult::Status::OPEN;
+            results.push_back(result);
+        }
+        close(connect_socket);
+
+    }
+    return results;
+}
+
+
+
 // potential template for 
 // Try to connect with a timeout (milliseconds). Returns true on successful connect.
-static bool connect_with_timeout(int sockfd, const struct sockaddr* sa, socklen_t sa_len, int timeout_ms) {
+/*static bool connect_with_timeout(int sockfd, const struct sockaddr* sa, socklen_t sa_len, int timeout_ms) {
     // Set non-blocking
     int flags = fcntl(sockfd, F_GETFL, 0);
     if (flags < 0) return false;
@@ -45,3 +92,4 @@ static bool connect_with_timeout(int sockfd, const struct sockaddr* sa, socklen_
     fcntl(sockfd, F_SETFL, flags);
     return (so_error == 0);
 }
+*/

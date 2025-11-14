@@ -2,6 +2,7 @@
 #pragma once
 
 #include "probe_result.hpp"
+#include "preprocessing.hpp"
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -26,8 +27,8 @@ public:
     // Synchronous probe: perform the probe and return a ProbeResult.
     // - timeout_ms: time budget for the probe (ms). Implementations should honor it.
     // This is the easiest to use while building single-threaded versions.
-    virtual ProbeResult probe_sync(const string& target_ip,
-                                   uint16_t port,
+    virtual vector<ProbeResult> probe_sync(const ResolvedTarget& target_ip,
+                                   uint16_t port_start, uint16_t port_stop,
                                    int timeout_ms) = 0;
 
     // Optional asynchronous-ish API (implement later if needed):
@@ -35,8 +36,8 @@ public:
     // poll_probe to get a result or cancel_probe to abort.
     //
     // Default implementations return std::nullopt to indicate "not supported".
-    virtual optional<int> start_probe(const string& target_ip,
-                                           uint16_t port,
+    virtual optional<int> start_probe(const ResolvedTarget& target_ip,
+                                           uint16_t port_start, uint16_t port_stop,
                                            int timeout_ms) {
         return nullopt;
     }

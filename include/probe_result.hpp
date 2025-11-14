@@ -10,3 +10,53 @@ struct ProbeResult {
     double     rtt_ms = 0.0;   // optional round-trip time in milliseconds
     string details;          // human-readable diagnostics or errno string
 };
+
+//
+// =====================
+//  Printing enums
+// =====================
+//
+
+inline std::ostream& operator<<(std::ostream& os, ProbeResult::Protocol p) {
+    switch (p) {
+        case ProbeResult::Protocol::TCP:   return os << "TCP";
+        case ProbeResult::Protocol::UDP:   return os << "UDP";
+        case ProbeResult::Protocol::ICMP:  return os << "ICMP";
+    }
+    return os << "UnknownProtocol";
+}
+
+inline std::ostream& operator<<(std::ostream& os, ProbeResult::Status s) {
+    switch (s) {
+        case ProbeResult::Status::OPEN:     return os << "OPEN";
+        case ProbeResult::Status::CLOSED:   return os << "CLOSED";
+        case ProbeResult::Status::FILTERED: return os << "FILTERED";
+        case ProbeResult::Status::TIMEOUT:  return os << "TIMEOUT";
+        case ProbeResult::Status::ERROR:    return os << "ERROR";
+        case ProbeResult::Status::UNKNOWN:  return os << "UNKNOWN";
+    }
+    return os << "InvalidStatus";
+}
+
+//
+// =====================================
+//  Pretty-print a full ProbeResult
+// =====================================
+//
+
+inline std::ostream& operator<<(std::ostream& os, const ProbeResult& r) {
+    os << "[ProbeResult]\n"
+       << " Target:   " << r.target << "\n"
+       << " Port:     " << r.port   << "\n"
+       << " Protocol: " << r.protocol << "\n"
+       << " Status:   " << r.status   << "\n"
+       << " RTT:      " << r.rtt_ms << " ms\n";
+
+    if (!r.service_banner.empty())
+        os << " Banner:   " << r.service_banner << "\n";
+
+    if (!r.details.empty())
+        os << " Details:  " << r.details << "\n";
+
+    return os;
+}

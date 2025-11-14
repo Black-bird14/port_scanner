@@ -82,13 +82,14 @@ int main(int argc, char* argv[]) {
     }
 
     //Check IP or Resolve Hostname        
-    const ResolvedTarget target_ip = dns_resolver(target);
+    target_ip = dns_resolver(target);
     // first turn port ranges to int
     auto [port_start, port_stop] = parse_port_range(port_range);
 
     if(vm.count("connect")){ 
         cout << "TCP Connect scan selected" << endl;
         //start scan
+        //scan_results = tcp_connect();
     }
     else if (vm.count("syn")){
         cout << "TCP SYN scan selected (stealth mode)" << endl;

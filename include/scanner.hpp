@@ -1,9 +1,12 @@
 #ifndef SCANNER_HPP
 #define SCANNER_HPP
+
+
 #include <boost/program_options.hpp>
-#include "preprocessing.hpp"
 #include <sstream>
 #include <stdexcept>
+#include "preprocessing.hpp"
+#include "tcp_connect.hpp"
 
 namespace po = boost::program_options;
 
@@ -14,6 +17,8 @@ string target;
 string port_range;
 int ports;
 vector<string> scans;
+ResolvedTarget target_ip;
+ProbeResult scan_results;
 po::options_description get_options_description();
 pair<int, int> parse_port_range(const string& range);
 

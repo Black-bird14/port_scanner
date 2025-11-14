@@ -4,11 +4,19 @@
 using namespace std;
 
 
-#include <vector>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <cstring>
+#include <stdexcept>
+#include <cerrno>
+#include <chrono>
+#include <ostream>
+#include <iostream>
 #include "probe.hpp"
 
 class TcpConnectProbe : public Probe {
@@ -22,11 +30,7 @@ class TcpConnectProbe : public Probe {
                             
         ProbeResult probe_sync(const string& target_ip,
                                    uint16_t port,
-                                   int timeout) override {
-            //init socket here
-            int sock = socket(AF_INET, SOCK_STREAM, 0);
-            
-        }
+                                   int timeout) override {}
 }
 
 #endif

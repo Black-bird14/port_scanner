@@ -4,16 +4,13 @@
 using namespace std;
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
 #include <stdexcept>
 #include <string>
 #include <cerrno>
-#include <chrono>
 #include <ostream>
 #include <iostream>
 
@@ -28,7 +25,6 @@ struct ResolvedTarget {
 };
 
 
-static bool connect_with_timeout(int sockfd, const struct sockaddr* sa, socklen_t sa_len, int timeout_ms);
-ResolvedTarget dns_resolver(const string& hostname, int timeout_ms = 500);
+ResolvedTarget dns_resolver(const string& hostname, int timeout_ms = 1000);
 
 #endif

@@ -1,5 +1,10 @@
-#pragma once
 #include <string>
+#include <vector>
+#include <ostream>
+#include <iostream>
+
+using namespace std;
+
 
 struct ProbeResult {
     string target;        // IPv[4|6] string
@@ -45,12 +50,11 @@ inline std::ostream& operator<<(std::ostream& os, ProbeResult::Status s) {
 //
 
 inline std::ostream& operator<<(std::ostream& os, const ProbeResult& r) {
-    os << "[ProbeResult]\n"
-       << " Target:   " << r.target << "\n"
-       << " Port:     " << r.port   << "\n"
-       << " Protocol: " << r.protocol << "\n"
-       << " Status:   " << r.status   << "\n"
-       << " RTT:      " << r.rtt_ms << " ms\n";
+    os << " Target:   " << r.target << "\n"
+       << " Port/Protocol:      " <<  " Status:      " << " RTT:      " << "\n"
+       << "  " << r.port << "/" << r.protocol << "              "
+       << r.status   << "          "
+       << r.rtt_ms << " ms\n";
 
     if (!r.service_banner.empty())
         os << " Banner:   " << r.service_banner << "\n";
@@ -60,3 +64,5 @@ inline std::ostream& operator<<(std::ostream& os, const ProbeResult& r) {
 
     return os;
 }
+
+void print_results(const std::vector<ProbeResult>& results);

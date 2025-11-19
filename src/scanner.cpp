@@ -92,9 +92,7 @@ int main(int argc, char* argv[]) {
         TcpConnectProbe connectprobe = TcpConnectProbe(target_ip, port_start, port_stop, 500);
         scan_results = connectprobe.probe_sync(target_ip, port_start, port_stop, 500);
 
-        for (ProbeResult result : scan_results){
-            cout << result << endl;
-        }
+        print_results(scan_results);
     }
     else if (vm.count("syn")){
         cout << "TCP SYN scan selected (stealth mode)" << endl;

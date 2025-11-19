@@ -2,6 +2,8 @@
 #include <vector>
 #include <ostream>
 #include <iostream>
+#include <iomanip>
+
 
 using namespace std;
 
@@ -50,15 +52,21 @@ inline std::ostream& operator<<(std::ostream& os, ProbeResult::Status s) {
 //
 
 inline std::ostream& operator<<(std::ostream& os, const ProbeResult& r) {
-    os << "  " << r.port << "/" << r.protocol << "              "
-       << r.status   << "          "
-       << r.rtt_ms << " ms\n";
+    // --- Column 1: Port/Protocol ---
+    ostringstream col1;
+    col1 << "  " << r.port << "/" << r.protocol;
 
-    if (!r.service_banner.empty())
-        os << " Banner:   " << r.service_banner << "\n";
+    // --- Column 3: RTT + unit ---
+    ostringstream col3;
+    col3 << r.rtt_ms << " ms";
 
-    if (!r.details.empty())
-        os << " Details:  " << r.details << "\n";
+    os << left
+       << setw(23) << col1.str()
+       << setw(14) << r.status
+       << setw(17) << col3.str()
+       << setw(30) << (!r.service_banner.empty() ? r.service_banner : "No service info")
+       << (!r.details.empty() ? r.details : "No details")
+       << "\n";
 
     return os;
 }

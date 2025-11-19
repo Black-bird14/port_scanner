@@ -50,9 +50,7 @@ inline std::ostream& operator<<(std::ostream& os, ProbeResult::Status s) {
 //
 
 inline std::ostream& operator<<(std::ostream& os, const ProbeResult& r) {
-    os << " Target:   " << r.target << "\n"
-       << " Port/Protocol:      " <<  " Status:      " << " RTT:      " << "\n"
-       << "  " << r.port << "/" << r.protocol << "              "
+    os << "  " << r.port << "/" << r.protocol << "              "
        << r.status   << "          "
        << r.rtt_ms << " ms\n";
 
@@ -66,3 +64,4 @@ inline std::ostream& operator<<(std::ostream& os, const ProbeResult& r) {
 }
 
 void print_results(const std::vector<ProbeResult>& results);
+void print_with_closed_ports(const std::vector<ProbeResult>& results);

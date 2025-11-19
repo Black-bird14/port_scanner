@@ -15,6 +15,7 @@ string SCAN = "tC";
 
 string target;
 string port_range;
+bool verbose = 0;
 int ports;
 vector<string> scans;
 ResolvedTarget target_ip;

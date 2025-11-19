@@ -85,6 +85,8 @@ int main(int argc, char* argv[]) {
     target_ip = dns_resolver(target);
     // first turn port ranges to int
     auto [port_start, port_stop] = parse_port_range(port_range);
+    
+    if(vm.count("verbose")) verbose = true;
 
     if(vm.count("connect")){ 
         cout << "TCP Connect scan selected" << endl;
@@ -92,7 +94,9 @@ int main(int argc, char* argv[]) {
         TcpConnectProbe connectprobe = TcpConnectProbe(target_ip, port_start, port_stop, 500);
         scan_results = connectprobe.probe_sync(target_ip, port_start, port_stop, 500);
 
-        print_results(scan_results);
+        if(verbose) print_with_closed_ports(scan_results);
+
+        else print_results(scan_results);
     }
     else if (vm.count("syn")){
         cout << "TCP SYN scan selected (stealth mode)" << endl;

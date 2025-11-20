@@ -7,8 +7,8 @@ vector<ProbeResult> TcpConnectProbe::probe_sync(const ResolvedTarget& target_ip,
                         uint16_t port_start, uint16_t port_stop,
                         int timeout) {
     vector<ProbeResult> results;
-    ProbeResult result;
     for (uint16_t port = port_start; port <= port_stop; port++){
+        ProbeResult result;
         int connect_socket = socket(target_ip.family, SOCK_STREAM, 0);
         if (connect_socket < 0) continue;
         // Set non-blocking

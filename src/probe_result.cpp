@@ -21,7 +21,7 @@ void print_results(const std::vector<ProbeResult>& results) {
         cout << r << endl;
     }
 
-       cout << ports.size() << " ports were closed." << endl;
+       cout << "Found " << ports.size() << " closed port(s)." << endl;
 }
 
 void print_with_closed_ports(const std::vector<ProbeResult>& results){

@@ -20,7 +20,7 @@ po::options_description get_options_description() {
     desc.add_options()
         ("help,h", "Display help message")
         ("ports,p", po::value<string>(&port_range)->default_value(PORT_RANGE), 
-      "Set port range to scan, e.g. -p 1000-5000, if no port range is provided, the default is 1-1024.")
+      "Set port range (or single port) to scan, e.g. -p 1000-5000 OR -p 22, if no port range is provided, the default is 1-1024.")
         ("verbose,v", "Displays a more detailed output during the scan.")
         ("scans", po::value< vector<string> >(&scans), 
         "Run multiple scan types.\nNOTE: Can't run two TCP scans at once, so only a TCP scan of choice and UDP scan can be run together.") 
@@ -31,16 +31,33 @@ po::options_description get_options_description() {
 }
 
 pair<int, int> parse_port_range(const string& range) {
+    // Case 1: single port (no dash)
+    if (range.find('-') == string::npos) {
+        int port;
+        istringstream iss(range);
+        if (!(iss >> port) || port < 1 || port > 65535) {
+            throw invalid_argument("Invalid port number. Must be 1–65535.");
+        }
+        return {port, port};
+    }
+
+    // Case 2: range with dash
     int start, stop;
     char dash;
     istringstream iss(range);
 
     if (!(iss >> start >> dash >> stop) || dash != '-') {
-        throw invalid_argument("Invalid port range format. Expected format: start-stop (e.g. 20-80)");
+        throw invalid_argument(
+            "Invalid port range format. Expected start-stop (e.g. 20-80)."
+        );
     }
+
     if (start < 1 || stop > 65535 || start > stop) {
-        throw out_of_range("Invalid port range values (must be 1–65535 and start <= stop)");
+        throw out_of_range(
+            "Invalid port range values: must be 1–65535 and start <= stop"
+        );
     }
+
     return {start, stop};
 }
 

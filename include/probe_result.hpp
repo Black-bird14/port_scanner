@@ -24,7 +24,7 @@ struct ProbeResult {
 // =====================
 //
 
-inline std::ostream& operator<<(std::ostream& os, ProbeResult::Protocol p) {
+inline ostream& operator<<(ostream& os, ProbeResult::Protocol p) {
     switch (p) {
         case ProbeResult::Protocol::TCP:   return os << "TCP";
         case ProbeResult::Protocol::UDP:   return os << "UDP";
@@ -33,7 +33,7 @@ inline std::ostream& operator<<(std::ostream& os, ProbeResult::Protocol p) {
     return os << "UnknownProtocol";
 }
 
-inline std::ostream& operator<<(std::ostream& os, ProbeResult::Status s) {
+inline ostream& operator<<(ostream& os, ProbeResult::Status s) {
     switch (s) {
         case ProbeResult::Status::OPEN:     return os << "OPEN";
         case ProbeResult::Status::CLOSED:   return os << "CLOSED";
@@ -50,8 +50,9 @@ inline std::ostream& operator<<(std::ostream& os, ProbeResult::Status s) {
 //  Pretty-print a full ProbeResult
 // =====================================
 //
+vector<string> wrap_text(const string &content, int width);
 
-inline std::ostream& operator<<(std::ostream& os, const ProbeResult& r) {
+inline ostream& operator<<(ostream& os, const ProbeResult& r) {
     // --- Column 1: Port/Protocol ---
     ostringstream col1;
     col1 << "  " << r.port << "/" << r.protocol;
@@ -62,14 +63,52 @@ inline std::ostream& operator<<(std::ostream& os, const ProbeResult& r) {
 
     os << left
        << setw(23) << col1.str()
-       << setw(14) << r.status
-       << setw(17) << col3.str()
-       << setw(30) << (!r.service_banner.empty() ? r.service_banner : "No service info")
-       << (!r.details.empty() ? r.details : "No details")
-       << "\n";
+       << setw(12) << r.status
+       << setw(12) << col3.str();
+
+    if(!r.service_banner.empty()){
+        auto banner_lines = wrap_text(r.service_banner, 20);
+
+        if(banner_lines.size() == 1) os << setw(30) << banner_lines[0];
+
+        else{
+            os << setw(30) << banner_lines[0] << "\n";
+            for (size_t i = 1; i < banner_lines.size(); i++) {
+                os << setw(23) << ""       // indent to align columns
+                    << setw(12) << ""       // empty for status column
+                    << setw(12) << ""       // empty for RTT column
+                    << setw(30) << banner_lines[i];
+            }
+        }
+    }
+    else os << setw(30) << "No service info";
+
+    if (!r.details.empty()) {
+        auto detail_lines = wrap_text(r.details, 28);
+
+        // First details line printed normally
+        os << setw(23) << ""
+           << setw(12) << ""
+           << setw(12) << ""
+           << setw(30) << detail_lines[0]
+           << "\n";
+
+        // Remaining detail lines
+        for (size_t i = 1; i < detail_lines.size(); i++) {
+            os << setw(23) << ""
+               << setw(12) << ""
+               << setw(12) << ""
+               << setw(30) << detail_lines[i]
+               << "\n";
+        }
+    }
+    else {
+        os << setw(15) << ""
+           << setw(30) << "No details" << "\n";
+    }
 
     return os;
 }
 
-void print_results(const std::vector<ProbeResult>& results);
-void print_with_closed_ports(const std::vector<ProbeResult>& results);
+void print_results(const vector<ProbeResult>& results);
+void print_with_closed_ports(const vector<ProbeResult>& results);

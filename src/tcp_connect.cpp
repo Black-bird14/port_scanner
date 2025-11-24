@@ -95,8 +95,28 @@ vector<ProbeResult> TcpConnectProbe::probe_sync(const ResolvedTarget& target_ip,
         socklen_t len = sizeof(so_error);
         getsockopt(connect_socket, SOL_SOCKET, SO_ERROR, &so_error, &len);
 
-        if (so_error == 0) 
+        if (so_error == 0) {
             result.status = ProbeResult::Status::OPEN;
+            tv.tv_sec = 200 / 1000;
+            tv.tv_usec = (200 % 1000) * 1000;
+            fcntl(connect_socket, F_SETFL, flags);
+
+            int wait = select(connect_socket + 1, NULL, &wf, NULL, &tv);
+            if (wait > 0){
+                //TODO: next step, recv() a few bytes to get service info
+                char buffer[5000]; // you are using C++ not C
+                int bytes = recv(connect_socket, buffer, sizeof(buffer), 0);
+                if(bytes >0){
+                    buffer[bytes] = '\0'; // Null-terminate the received data
+                    string str;
+                    str.assign(buffer, buffer + strlen(buffer));
+                    result.service_banner = buffer;
+                }
+                
+            }
+            
+        }
+            
         else if (so_error == ECONNREFUSED)
             result.status = ProbeResult::Status::CLOSED;
         else if (so_error == ETIMEDOUT)
@@ -108,5 +128,7 @@ vector<ProbeResult> TcpConnectProbe::probe_sync(const ResolvedTarget& target_ip,
         close(connect_socket);
 
     }
+
+    
     return results;
 }

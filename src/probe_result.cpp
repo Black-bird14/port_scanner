@@ -3,13 +3,13 @@
 
 void print_results(const std::vector<ProbeResult>& results) {
     vector<uint16_t> ports;
-    cout << "Scan Results" << endl;
-    cout << " Target:   " << results[0].target << endl;
+    cout << "Scan Results" << "\n" << endl;
+    cout << " Target:   " << results[0].target << "\n" << endl;
     cout << left
          << setw(22) << " Port/Protocol"
          << setw(13) << "Status"
          << setw(13) << "RTT"
-         << setw(45) << "Service"
+         << setw(40) << "Service"
          << "Details"
          << endl;
     
@@ -32,7 +32,7 @@ void print_with_closed_ports(const std::vector<ProbeResult>& results){
          << setw(22) << " Port/Protocol"
          << setw(15) << "Status"
          << setw(18) << "RTT"
-         << setw(30) << "Service"
+         << setw(40) << "Service"
          << "Details"
          << endl;
     for (ProbeResult r: results)  cout << r << endl;

@@ -53,60 +53,38 @@ inline ostream& operator<<(ostream& os, ProbeResult::Status s) {
 vector<string> wrap_text(const string &content, int width);
 
 inline ostream& operator<<(ostream& os, const ProbeResult& r) {
-    // --- Column 1: Port/Protocol ---
+    // --- MAIN ROW (row 0) ---
     ostringstream col1;
     col1 << "  " << r.port << "/" << r.protocol;
-
-    // --- Column 3: RTT + unit ---
     ostringstream col3;
     col3 << r.rtt_ms << " ms";
+
+    // Prepare wrapped text (each becomes its own vector of lines)
+    auto banner_lines = wrap_text(r.service_banner.empty() ?
+                                  "No service info" : r.service_banner, 30);
+
+    auto detail_lines = wrap_text(r.details.empty() ?
+                                  "No details" : r.details, 30);
+
+    size_t max_rows = std::max(banner_lines.size(), detail_lines.size());
 
     os << left
        << setw(23) << col1.str()
        << setw(12) << r.status
-       << setw(12) << col3.str();
+       << setw(12) << col3.str()
+       << setw(40) << banner_lines[0]
+       << setw(40) << detail_lines[0]
+       << "\n";
 
-    if(!r.service_banner.empty()){
-        auto banner_lines = wrap_text(r.service_banner, 20);
-
-        if(banner_lines.size() == 1) os << setw(30) << banner_lines[0];
-
-        else{
-            os << setw(30) << banner_lines[0] << "\n";
-            for (size_t i = 1; i < banner_lines.size(); i++) {
-                os << setw(23) << ""       // indent to align columns
-                    << setw(12) << ""       // empty for status column
-                    << setw(12) << ""       // empty for RTT column
-                    << setw(30) << banner_lines[i];
-            }
-        }
-    }
-    else os << setw(30) << "No service info";
-
-    if (!r.details.empty()) {
-        auto detail_lines = wrap_text(r.details, 28);
-
-        // First details line printed normally
-        os << setw(23) << ""
-           << setw(12) << ""
-           << setw(12) << ""
-           << setw(30) << detail_lines[0]
+    // --- WRAPPED FOLLOW-UP ROWS ---
+    for (size_t i = 1; i < max_rows; i++) {
+        os << setw(23) << ""          // empty Port/Protocol
+           << setw(12) << ""          // empty Status
+           << setw(12) << ""          // empty RTT
+           << setw(40) << (i < banner_lines.size() ? banner_lines[i] : "")
+           << setw(40) << (i < detail_lines.size() ? detail_lines[i] : "")
            << "\n";
-
-        // Remaining detail lines
-        for (size_t i = 1; i < detail_lines.size(); i++) {
-            os << setw(23) << ""
-               << setw(12) << ""
-               << setw(12) << ""
-               << setw(30) << detail_lines[i]
-               << "\n";
-        }
     }
-    else {
-        os << setw(15) << ""
-           << setw(30) << "No details" << "\n";
-    }
-
     return os;
 }
 

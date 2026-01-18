@@ -1,9 +1,7 @@
 #include "tcp_connect.hpp"
 
 
-
-
-vector<ProbeResult> TcpConnectProbe::probe_sync(const ResolvedTarget& target_ip,
+vector<ProbeResult> TcpConnectProbe::probe_sync(const ResolvedTarget& target_ip, string hostname="",
                         uint16_t port_start, uint16_t port_stop,
                         int timeout) {
     vector<ProbeResult> results;

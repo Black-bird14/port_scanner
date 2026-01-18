@@ -27,7 +27,7 @@ public:
     // Synchronous probe: perform the probe and return a ProbeResult.
     // - timeout_ms: time budget for the probe (ms). Implementations should honor it.
     // This is the easiest to use while building single-threaded versions.
-    virtual vector<ProbeResult> probe_sync(const ResolvedTarget& target_ip,
+    virtual vector<ProbeResult> probe_sync(const ResolvedTarget& target_ip, string hostname
                                    uint16_t port_start, uint16_t port_stop,
                                    int timeout_ms) = 0;
 

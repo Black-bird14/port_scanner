@@ -4,9 +4,9 @@
 #include <vector>
 //#include <string>
 
-using boost::asio::ip::tcp;
 namespace asio = boost::asio;
 namespace ssl = asio::ssl;
+using tcp = asio::ip::tcp;
 typedef ssl::stream<tcp::socket> SSLSocket;
 using generic_endpoint = asio::generic::stream_protocol::endpoint;
 
@@ -24,10 +24,13 @@ class SslProbe : public Probe {
                                    uint16_t port_start,
                                    uint16_t port_stop,
                                    int timeout) override;
-        void handshake();
-        void connect(const ResolvedTarget& target_ip);//const tcp::resolver::results_type& endpoints);
+        void perform_handshake();
+        void connect_(const ResolvedTarget& target_ip);//const tcp::resolver::results_type& endpoints);
         bool verify(bool preverified,
       ssl::verify_context& ctx);
 
         void handler(const boost::system::error_code& error, string htype);//generic handler function
+        tcp::endpoint to_tcp_endpoint(sockaddr_storage ip);
+    
 };
+enum class HandlerType { CONNECT, HANDSHAKE, ICMP } protocol = Protocol::TCP;

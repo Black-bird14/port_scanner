@@ -1,15 +1,15 @@
 #include "ssl_probe.hpp"
 
-using namespace SslProbe;
+//using namespace SslProbe;
 
-vector<ProbeResult> probe_sync(const ResolvedTarget& target_ip, string hostname="",
+vector<ProbeResult> probe_sync(const ResolvedTarget& target_ip,
                                    uint16_t port_start,
                                    uint16_t port_stop,
-                                   int timeout) {
+                                   int timeout, string hostname="") {
     //will be acting as main
     // Create a context that uses the default paths for
     // finding CA certificates.
-    //ssl::context ctx(ssl::context::sslv23);
+    ssl::context ctx(ssl::context::sslv23);
     ctx.set_default_verify_paths();
 
     // Open a socket and connect it to the remote host.
@@ -18,20 +18,20 @@ vector<ProbeResult> probe_sync(const ResolvedTarget& target_ip, string hostname=
     tcp::resolver resolver(io_context);
     //tcp::resolver::query query("host.name", "https");
     sock.lowest_layer().set_option(tcp::no_delay(true));
-    sock.set_verify_callback(std::bind(&SslProbe::verify, this, _1, _2));
+    sock.set_verify_callback(std::bind(&SslProbe::verify, std::placeholders::_1, std::placeholders::_2));
 
     if(!hostname.empty()){
-        tcp::resolver::query target_ep(resolver.resolve(target_ep), "https");
-        asio::connect(sock.lowest_layer(), query);//TODO: USE TCP::ENDPOINT TYPE
-        connect_(target_ep);
+        auto target_ep = resolver.resolve(target_ep, "https");//TODO: MIGHT USE ERROR_CODE
+        asio::connect(sock.lowest_layer(), target_ep);
+        SslProbe::connect_(target_ep, sock);
     }
 
-    connect_(target_ip);
+    else SslProbe::connect_(target_ip, sock);
 }
 
 void perform_handshake(){//handshake handler as a lamda function
     ssl::stream::async_handshake(SSLSocket::client,
-        boost::bind(&handler,this, boost::asio::placeholders::error));
+        std::bind(&SslProbe::handler, boost::asio::placeholders::error));
 
 }
 
@@ -39,51 +39,74 @@ void perform_handshake(){//handshake handler as a lamda function
 void verify(bool preverified, // True if the certificate passed pre-verification.
       ssl::verify_context& ctx // The peer certificate and other context.
       ){
+        // The verify callback can be used to check whether the certificate that is
+        // being presented is valid for the peer. For example, RFC 2818 describes
+        // the steps involved in doing this for HTTPS. Consult the OpenSSL
+        // documentation for more details. Note that the callback is called once
+        // for each certificate in the certificate chain, starting from the root
+        // certificate authority.
 
+        // For now will simply print the certificate's subject name.
+        char subject_name[256];
+        X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+        X509_NAME_oneline(X509_get_subject_name(cert), subject_name, 256);
+        cout << "Verifying " << subject_name << "\n";
+
+        return preverified;
 }
 
-//TODO: SET THINGS UP SO THAT SSL-PROBE DOES NOT USE TARGET_IP
-void connect_(const ResolvedTarget& target_ip=null, tcp::endpoint target_ep=null){
+void connect_(std::optional<ResolvedTarget> target_ip,
+              std::optional<tcp::resolver::results_type> target_ep,
+              SSLSocket& sock)
+{
+    if (target_ip) {
+        tcp::endpoint ep = /* build from target_ip + port */; //TODO
 
-    if(target_ip){
-        tcp::endpoint endpoint = to_tcp_endpoint(target_ip.addr);
+        sock.lowest_layer().async_connect(ep,
+            [this](const boost::system::error_code& ec) {
+                handler(ec, HandlerType::CONNECT);
+            });
 
-        boost::asio::async_connect(sock.lowest_layer(), endpoint,
-            boost::bind(&handler,this, boost::asio::placeholders::error));
-        
-        cout << "SSL Probe was successful" << endl; //TODO: ENSURE I WANT THIS MESSAGE HERE
+        return;
     }
-    else
-        boost::asio::async_connect(sock.lowest_layer(), target_ep,
-            boost::bind(&handler,this, boost::asio::placeholders::error));
-        
-        cout << "SSL Probe was successful" << endl; //TODO: ENSURE I WANT THIS MESSAGE HERE
 
+    if (target_ep) {
+        boost::asio::async_connect(sock.lowest_layer(), *target_ep,
+            [this](const boost::system::error_code& ec, const tcp::endpoint& /*ep*/) {
+                handler(ec, HandlerType::CONNECT);
+            });
+
+        return;
+    }
 }
+
 
 //TODO: UNFINISHED AND UNINTEGRATED
-  void handler(const boost::system::error_code& error, string htype){
+void handler(const boost::system::error_code& error, const HandlerType& htype){
     if (!error)
           {
             switch(htype){
-                case("Connect") handshake();
-                case("Handshake") std::cout << "Handshake was successful" << endl;
+                case HandlerType::CONNECT:
+                    SslProbe::handshake();
+                    break;
+                case HandlerType::HANDSHAKE:
+                    std::cout << "Handshake was successful" << endl;
+                    break;
             }
             
           }
     else
-        std::cout << htype << " failed: " << error.message() << "\n";
+        //std::cout << htype << " failed: " << error.message() << "\n";
+          cout<< "Operation failed"<<endl;//FOR NOW
 }
 
 //ASSUMED TO BE DONE AND FUNCTIONAL
-tcp::endpoint to_tcp_endpoint(sockaddr_storage ip){
+tcp::resolver::results_type to_tcp_endpoint(sockaddr_storage ip){
     // Convert to a generic endpoint first
-    generic_endpoint gen_ep(ip, sizeof(ip));
+    stream_protocol::endpoint gen_ep(ip, sizeof(ip));
 
     // Then to a specific endpoint if needed (e.g., TCP)
-    if (gen_ep.protocol().type() == tcp::protocol().type()) {
-        tcp::endpoint tcp_ep = gen_ep; // Type-safe conversion
-        
-        return tcp_ep;
-    }
+    tcp::resolver::results_type tcp_ep(gen_ep); 
+
+    return tcp_ep;
 }

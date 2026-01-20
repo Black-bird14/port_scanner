@@ -9,6 +9,7 @@ namespace ssl = asio::ssl;
 using tcp = asio::ip::tcp;
 typedef ssl::stream<tcp::socket> SSLSocket;
 using generic_endpoint = asio::generic::stream_protocol::endpoint;
+using asio::generic::stream_protocol;
 
 class SslProbe : public Probe {
     private:
@@ -20,17 +21,17 @@ class SslProbe : public Probe {
         SslProbe (const ResolvedTarget& ip, uint16_t pstart, uint16_t pstop, int t)
                     : target_ip(ip), port_start(pstart), port_stop(pstop), timeout(t) {}
                             
-        vector<ProbeResult> probe_sync(const ResolvedTarget& target_ip, string hostname,
+        vector<ProbeResult> probe_sync(const ResolvedTarget& target_ip,
                                    uint16_t port_start,
                                    uint16_t port_stop,
-                                   int timeout) override;
+                                   int timeout, string hostname="") override;
         void perform_handshake();
-        void connect_(const ResolvedTarget& target_ip);//const tcp::resolver::results_type& endpoints);
+        void connect_(std::optional<ResolvedTarget> target_ip, std::optional<tcp::resolver::results_type> target_ep, const SSLSocket& sock);//const tcp::resolver::results_type& endpoints);
         bool verify(bool preverified,
       ssl::verify_context& ctx);
 
         void handler(const boost::system::error_code& error, string htype);//generic handler function
-        tcp::endpoint to_tcp_endpoint(sockaddr_storage ip);
+        tcp::resolver::results_type to_tcp_endpoint(sockaddr_storage ip);
     
 };
-enum class HandlerType { CONNECT, HANDSHAKE, ICMP } protocol = Protocol::TCP;
+enum class HandlerType { CONNECT, HANDSHAKE, VERIFY };

@@ -27,13 +27,13 @@ class TcpConnectProbe : public Probe {
         uint16_t port_stop;
         int timeout;
     public:
-        TcpConnectProbe (const ResolvedTarget& ip, string hostname, uint16_t pstart, uint16_t pstop, int t)
+        TcpConnectProbe (const ResolvedTarget& ip, uint16_t pstart, uint16_t pstop, int t)
                     : target_ip(ip), port_start(pstart), port_stop(pstop), timeout(t) {}
                             
         vector<ProbeResult> probe_sync(const ResolvedTarget& target_ip,
                                    uint16_t port_start,
                                    uint16_t port_stop,
-                                   int timeout) override;
+                                   int timeout, string hostname="") override;
 };
 
 #endif

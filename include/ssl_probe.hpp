@@ -11,6 +11,9 @@ typedef ssl::stream<tcp::socket> SSLSocket;
 using generic_endpoint = asio::generic::stream_protocol::endpoint;
 using asio::generic::stream_protocol;
 
+enum class HandlerType { CONNECT, HANDSHAKE, VERIFY };
+
+
 class SslProbe : public Probe {
     private:
         ResolvedTarget target_ip;
@@ -26,12 +29,12 @@ class SslProbe : public Probe {
                                    uint16_t port_stop,
                                    int timeout, string hostname="") override;
         void perform_handshake();
-        void connect_(std::optional<ResolvedTarget> target_ip, std::optional<tcp::resolver::results_type> target_ep, const SSLSocket& sock);//const tcp::resolver::results_type& endpoints);
-        bool verify(bool preverified,
-      ssl::verify_context& ctx);
+        void connect_(const tcp::endpoint& single_ep, SSLSocket& sock);
+        void connect_(const tcp::resolver::results_type& multiple_eps, SSLSocket& sock);
 
-        void handler(const boost::system::error_code& error, string htype);//generic handler function
-        tcp::resolver::results_type to_tcp_endpoint(sockaddr_storage ip);
+        bool verify(bool preverified, ssl::verify_context& ctx);
+
+        void handler(const boost::system::error_code& error, HandlerType htype);//generic handler function
+        tcp::endpoint to_tcp_endpoint(ResolvedTarget ip, uint16_t port);
     
 };
-enum class HandlerType { CONNECT, HANDSHAKE, VERIFY };

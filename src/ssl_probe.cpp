@@ -2,41 +2,57 @@
 
 //using namespace SslProbe;
 
-vector<ProbeResult> probe_sync(const ResolvedTarget& target_ip,
+vector<ProbeResult> SslProbe::probe_sync(const ResolvedTarget& target_ip,
                                    uint16_t port_start,
                                    uint16_t port_stop,
-                                   int timeout, string hostname="") {
+                                   int timeout, string hostname) {
     //will be acting as main
     // Create a context that uses the default paths for
     // finding CA certificates.
-    ssl::context ctx(ssl::context::sslv23);
+    ssl::context ctx(ssl::context::sslv3_client);
     ctx.set_default_verify_paths();
+    std::vector<ProbeResult> results;
 
-    // Open a socket and connect it to the remote host.
-    asio::io_context io_context;
-    SSLSocket sock(io_context, ctx);
-    tcp::resolver resolver(io_context);
-    //tcp::resolver::query query("host.name", "https");
-    sock.lowest_layer().set_option(tcp::no_delay(true));
-    sock.set_verify_callback(std::bind(&SslProbe::verify, std::placeholders::_1, std::placeholders::_2));
+    for (uint16_t port = port_start; port <= port_stop; port++){
+        // Open a socket and connect it to the remote host.
+        asio::io_context io_context;
+        SSLSocket sock(io_context, ctx);
+        tcp::resolver resolver(io_context);
+        sock.lowest_layer().set_option(tcp::no_delay(true));
+        sock.set_verify_callback(
+            [this](bool preverified, boost::asio::ssl::verify_context& ctx) {
+                return this->verify(preverified, ctx);
+            });
 
-    if(!hostname.empty()){
-        auto target_ep = resolver.resolve(target_ep, "https");//TODO: MIGHT USE ERROR_CODE
-        asio::connect(sock.lowest_layer(), target_ep);
-        SslProbe::connect_(target_ep, sock);
+        if(!hostname.empty()){
+            auto target_eps = resolver.resolve(hostname, std::to_string(port));//TODO: MIGHT USE ERROR_CODE
+            SslProbe::connect_(target_eps, sock);
+        }
+
+        else {
+            /* build from target_ip + port */
+            tcp::endpoint ep = to_tcp_endpoint(target_ip, port);
+            SslProbe::connect_(ep, sock);
+        }
+
+        // run until probe finishes or timeout triggers inside your probe logic
+        io_context.run();
+
+        // push whatever result handler recorded for this port
+        // results.push_back(...);
     }
 
-    else SslProbe::connect_(target_ip, sock);
+    return results;
 }
 
-void perform_handshake(){//handshake handler as a lamda function
+void SslProbe::perform_handshake(){//handshake handler as a lamda function
     ssl::stream::async_handshake(SSLSocket::client,
         std::bind(&SslProbe::handler, boost::asio::placeholders::error));
 
 }
 
 //The function object to be used for verifying a certificate
-void verify(bool preverified, // True if the certificate passed pre-verification.
+bool SslProbe::verify(bool preverified, // True if the certificate passed pre-verification.
       ssl::verify_context& ctx // The peer certificate and other context.
       ){
         // The verify callback can be used to check whether the certificate that is
@@ -55,39 +71,31 @@ void verify(bool preverified, // True if the certificate passed pre-verification
         return preverified;
 }
 
-void connect_(std::optional<ResolvedTarget> target_ip,
-              std::optional<tcp::resolver::results_type> target_ep,
-              SSLSocket& sock)
-{
-    if (target_ip) {
-        tcp::endpoint ep = /* build from target_ip + port */; //TODO
+//For direct IP handling 
+void SslProbe::connect_(const tcp::endpoint& single_ep, SSLSocket& sock){
+    sock.lowest_layer().async_connect(single_ep,
+        [this](const boost::system::error_code& ec) {
+            SslProbe::handler(ec, HandlerType::CONNECT);
+        });
+}
 
-        sock.lowest_layer().async_connect(ep,
-            [this](const boost::system::error_code& ec) {
-                handler(ec, HandlerType::CONNECT);
-            });
-
-        return;
-    }
-
-    if (target_ep) {
-        boost::asio::async_connect(sock.lowest_layer(), *target_ep,
-            [this](const boost::system::error_code& ec, const tcp::endpoint& /*ep*/) {
-                handler(ec, HandlerType::CONNECT);
-            });
-
-        return;
-    }
+//For after hostname was resolved
+void SslProbe::connect_(const tcp::resolver::results_type& multiple_eps, SSLSocket& sock){
+    boost::asio::async_connect(sock.lowest_layer(), multiple_eps,
+        [this](const boost::system::error_code& ec, const tcp::endpoint& /*ep*/) {
+            SslProbe::handler(ec, HandlerType::CONNECT);
+        });
 }
 
 
+
 //TODO: UNFINISHED AND UNINTEGRATED
-void handler(const boost::system::error_code& error, const HandlerType& htype){
+void SslProbe::handler(const boost::system::error_code& error, const HandlerType& htype){
     if (!error)
           {
             switch(htype){
                 case HandlerType::CONNECT:
-                    SslProbe::handshake();
+                    SslProbe::perform_handshake();
                     break;
                 case HandlerType::HANDSHAKE:
                     std::cout << "Handshake was successful" << endl;
@@ -101,12 +109,28 @@ void handler(const boost::system::error_code& error, const HandlerType& htype){
 }
 
 //ASSUMED TO BE DONE AND FUNCTIONAL
-tcp::resolver::results_type to_tcp_endpoint(sockaddr_storage ip){
-    // Convert to a generic endpoint first
-    stream_protocol::endpoint gen_ep(ip, sizeof(ip));
+tcp::endpoint SslProbe::to_tcp_endpoint(ResolvedTarget ip, uint16_t port){
+    // Use AF_ to determine which to convert to (ipv4 vs ipv6)
+    if (ip.family == AF_INET) {
+        auto* addr4 = reinterpret_cast<const sockaddr_in*>(&ip.addr);
 
-    // Then to a specific endpoint if needed (e.g., TCP)
-    tcp::resolver::results_type tcp_ep(gen_ep); 
+        boost::asio::ip::address_v4::bytes_type bytes{};
+        std::memcpy(bytes.data(), &addr4->sin_addr, bytes.size());
 
-    return tcp_ep;
+        // Then to a specific endpoint if needed (e.g., TCP)
+        return tcp::endpoint(boost::asio::ip::address_v4(bytes), port);
+    
+    }
+
+    else if(ip.family == AF_INET6){
+        // Copy the base IPv6 address
+        auto* addr6 = reinterpret_cast<const sockaddr_in6*>(&ip.addr);
+
+        boost::asio::ip::address_v6::bytes_type bytes{};
+        std::memcpy(bytes.data(), &addr6->sin6_addr, bytes.size());
+
+        return tcp::endpoint(boost::asio::ip::address_v6(bytes), port);
+    }
+
+    throw std::runtime_error("Unsupported address family in sockaddr_storage");
 }

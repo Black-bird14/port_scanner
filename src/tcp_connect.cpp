@@ -3,7 +3,7 @@
 
 vector<ProbeResult> TcpConnectProbe::probe_sync(const ResolvedTarget& target_ip,
                         uint16_t port_start, uint16_t port_stop,
-                        int timeout, string hostname="") {
+                        int timeout, string hostname) {
     vector<ProbeResult> results;
     for (uint16_t port = port_start; port <= port_stop; port++){
         ProbeResult result;

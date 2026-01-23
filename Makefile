@@ -6,7 +6,7 @@ CXXFLAGS = -Wall -g
 LDFLAGS = -Wl,-rpath,/usr/lib/x86_64-linux-gnu
 INCLUDES = -I$(CURDIR)/include/ -I/usr/local/include -I/usr/include
 # Space-separated pkg-config libraries used by this project
-LIBS = -lboost_program_options
+LIBS = -lboost_program_options -lboost_system -lssl -lcrypto -lpthread
 
 # path #
 SRC_PATH = src

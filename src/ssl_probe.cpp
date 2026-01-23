@@ -45,9 +45,11 @@ vector<ProbeResult> SslProbe::probe_sync(const ResolvedTarget& target_ip,
     return results;
 }
 
-void SslProbe::perform_handshake(){//handshake handler as a lamda function
-    ssl::stream::async_handshake(SSLSocket::client,
-        std::bind(&SslProbe::handler, boost::asio::placeholders::error));
+void SslProbe::perform_handshake(SSLSocket& sock){//handshake handler as a lamda function
+    sock.async_handshake(ssl::stream_base::client,
+        [this, &sock](const boost::system::error_code& ec) {
+            this->handler(ec, HandlerType::HANDSHAKE, sock);
+        });
 
 }
 
@@ -74,28 +76,28 @@ bool SslProbe::verify(bool preverified, // True if the certificate passed pre-ve
 //For direct IP handling 
 void SslProbe::connect_(const tcp::endpoint& single_ep, SSLSocket& sock){
     sock.lowest_layer().async_connect(single_ep,
-        [this](const boost::system::error_code& ec) {
-            SslProbe::handler(ec, HandlerType::CONNECT);
+        [this, &sock](const boost::system::error_code& ec) {
+             this->handler(ec, HandlerType::CONNECT, sock);
         });
 }
 
 //For after hostname was resolved
 void SslProbe::connect_(const tcp::resolver::results_type& multiple_eps, SSLSocket& sock){
     boost::asio::async_connect(sock.lowest_layer(), multiple_eps,
-        [this](const boost::system::error_code& ec, const tcp::endpoint& /*ep*/) {
-            SslProbe::handler(ec, HandlerType::CONNECT);
+        [this, &sock](const boost::system::error_code& ec, const tcp::endpoint& /*ep*/) {
+             this->handler(ec, HandlerType::CONNECT, sock);
         });
 }
 
 
 
 //TODO: UNFINISHED AND UNINTEGRATED
-void SslProbe::handler(const boost::system::error_code& error, const HandlerType& htype){
+void SslProbe::handler(const boost::system::error_code& error, const HandlerType& htype, SSLSocket& sock){
     if (!error)
           {
             switch(htype){
                 case HandlerType::CONNECT:
-                    SslProbe::perform_handshake();
+                    SslProbe::perform_handshake(sock);
                     break;
                 case HandlerType::HANDSHAKE:
                     std::cout << "Handshake was successful" << endl;

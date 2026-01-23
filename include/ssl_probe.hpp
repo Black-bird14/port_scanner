@@ -28,13 +28,13 @@ class SslProbe : public Probe {
                                    uint16_t port_start,
                                    uint16_t port_stop,
                                    int timeout, string hostname="") override;
-        void perform_handshake();
+        void perform_handshake(SSLSocket& sock);
         void connect_(const tcp::endpoint& single_ep, SSLSocket& sock);
         void connect_(const tcp::resolver::results_type& multiple_eps, SSLSocket& sock);
 
         bool verify(bool preverified, ssl::verify_context& ctx);
 
-        void handler(const boost::system::error_code& error, HandlerType htype);//generic handler function
+        void handler(const boost::system::error_code& error, const HandlerType& htype, SSLSocket& sock);//generic handler function
         tcp::endpoint to_tcp_endpoint(ResolvedTarget ip, uint16_t port);
     
 };
